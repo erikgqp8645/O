@@ -20,6 +20,7 @@ Compasses currently shipped:
 - **阴阳遁九局盘 (qi-men-dun-jia)** — 奇门遁甲阴阳遁九局可视化：冬至 = 0° 起序，24 节气 15° × 3 元 5° × 5 天 1° 三层嵌套。5 环由外到内为六轮甲子日环（360 段）/ 24 节气点环 / 农历日期段环 / 上中下三元 / 九局数，圆心信息卡显示当日阳/阴遁 · 节气 · 三元 · 局 · 状态。
 - **黄帝内经·五运六气盘 (huangdi-neijing)** — 《素问》七篇大论所述五运六气学说可视化：与奇门盘共用日粒度年历坐标（六轮甲子 / 24 节气 / 农历日期外层三环），内嵌主气 / 客气 / 主运 / 客运四环，中央 WuYunInfoCenter 展示年干支 · 岁运 · 司天 · 在泉 · 当令主客气与主客运 · 干支四柱。
 - **会合周期盘 (conjunction-cycles)** — 五星（水金火木土）两两会合的赤经序列可视化：以当前时间之后最近一次会合为起点，向未来窗口内的相邻会合两点连线，越远越暗；10 对行星组合各成一色，可自由勾选。外环复用赤经刻度与七曜入宿度标记，中央整片圆域作为连线画布。
+- **易象罗盘 (yixiang-luopan)** — 彩色同心环「罗盘」：周天三百六十度刻度 → 二十八宿分度（巽中起角，逆行二十四山）→ 先天六十四卦（带六爻爻画）→ 八卦 → 二十四节气 → 十二辟卦（十二消息卦，复≡冬至）→ 七十二候 → 六十甲子（纳音）→ 纳甲六十四卦（京房六日七分）→ 十二时辰 → 二十四山，共十一层同心环，当前节气 / 物候 / 值卦值爻 / 日柱逐环高亮，中央圆心为四柱 · 旬空 · 月相信息卡，环层可逐层开关（Teleport 到侧栏「视图选项」）。**各环统一锚定到同一套方位基准**（罗盘古式上南下北：正上=南·正下=北·正左=东·正右=西；子在正北、冬至与子中同轴、二分二至落在子卯午酉、十二辟卦四正卦复/大壮/姤/观亦落在子卯午酉、乾居正南、坎为水直冬至），锚点机制见 `src/utils/yixiang/rings.ts` 的 `RING_ANCHORS`，自检见 `src/utils/yixiang/__tests__/anchors.spec.ts`。盘面沿用「宣纸底 + 朱砂」配色（变量挂在 View 的 `.container` 上，不写 `:root`，不影响站内其它页面）；历法计算走 lunar-typescript，排盘口径见 `src/utils/yixiang/timeEngine.ts` 顶部注释与 `src/utils/yixiang/__tests__/timeEngine.spec.ts` 的 12 组自检。**本仓库是易象罗盘的唯一来源**：独立仓 `yixiang-luopan` 已于 2026-10-30 冻结留档，不再同步、不再维护，改口径只改本仓。
 
 Core libraries: **astronomy-engine** for precise solar position, **tyme4ts** for traditional calendar / ganzhi calculations. Hosting: **VitePress 1.6** (no Vue Router, no SPA entry). Compass pages live as `docs/compass/*.md` with a custom `layout: compass` that full-screen-renders `src/views/*.vue`. See §"VitePress ↔ src/ 融合关系" below.
 
@@ -123,7 +124,7 @@ const rotationAngle = ref(0)
 2. **🔹 #center slot 机制**: 最内环渲染完成后，自动暴露 `innerRadius` 给圆心组件
 3. **统一注入**: `rotationDirection` 统一注入所有子环和圆心组件
 4. **实时时钟**: `LiushiJiaziView` / `PlanetMansionView` 通过 `useLiveClock` composable 内置 1Hz 实时时钟
-5. **Alt + 拖拽/滚轮**: 通过 `useAltDragPan` composable 统一接管平移/缩放交互
+5. **滚轮缩放 / 双击放大 / 中键或 Alt+拖拽平移**: 通过 `useAltDragPan` composable 统一接管视口交互（缩放以光标为锚，范围 5%~1000%，全部罗盘通用）
 6. **无计算**: 所有 `computed` 仅用于布局参数，不涉及领域逻辑
 
 **架构正确性检查：**
@@ -481,7 +482,7 @@ docs/                              # VitePress 站点根
 │       ├── index.ts               # 主题入口：Layout 分派 + 全局注册 View/环组件
 │       ├── tokens.css             # 紫金 design tokens
 │       ├── layouts/
-│       │   └── CompassLayout.vue  # 全屏罗盘 layout（隐藏 nav/sidebar/aside）
+│       │   └── CompassLayout.vue  # 全屏罗盘 layout（隐藏 nav/sidebar/aside）+ 左上角罗盘一览按钮
 │       └── components/
 │           └── CompassFigure.vue  # md 内嵌罗盘插图外壳
 ├── index.md                       # 站点首页
@@ -606,8 +607,9 @@ src/                               # 组件库（无 main.ts / App.vue / router�
 │   │       └── ConjunctionCanvas.vue      # 会合周期连线画布（圆心区连线绘制）
 │   ├── sidebar/                     # 罗盘左侧嵌入式 Sidebar（取代旧 Control 面板）
 │   │   ├── CompassSidebar.vue      # Sidebar 外壳（挂在 CompassLayout，单点挂载）
-│   │   ├── SidebarHeader.vue       # 顶部：返回罗盘列表 + 当前罗盘名 + 折叠按钮
+│   │   ├── SidebarHeader.vue       # 顶部：返回首页 + 当前罗盘名 + 折叠按钮
 │   │   ├── SidebarToggleHandle.vue # 折叠态的左中悬浮把手（40×80）
+│   │   ├── CompassListButton.vue  # 左上角常驻「← 罗盘一览」悬浮按钮（侧栏展开时自动右移让位）
 │   │   ├── SidebarSection.vue      # 可折叠 section 通用外壳
 │   │   ├── SidebarButton.vue       # 侧栏按钮统一样式
 │   │   ├── TimePanel.vue           # 时间信息 / 播放 / 步进 / 输入面板
@@ -657,7 +659,7 @@ src/                               # 组件库（无 main.ts / App.vue / router�
 │   ├── useSidebarLayout.ts         # 侧栏折叠 + section 状态 + localStorage 持久化
 │   ├── useCompassContext.ts        # 跨 Layout/View 单例：View → Sidebar 状态桥
 │   ├── useCompassMeta.ts           # 从当前 URL 匹配 compasses[] 元数据
-│   ├── useAltDragPan.ts            # Alt + 拖拽平移 / Alt + 滚轮缩放
+│   ├── useAltDragPan.ts            # 滚轮以光标为锚缩放 / 双击放大 / 中键或 Alt+拖拽平移
 │   ├── useGeolocation.ts           # 浏览器定位（观斗盘/风水盘使用）
 │   ├── usePhoneOrientation.ts      # DeviceOrientation 手机磁北朝向（风水盘）
 │   ├── useMagneticDeclination.ts   # WMM 地磁模型磁偏角校正（风水盘）
