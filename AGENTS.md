@@ -96,7 +96,19 @@ SVG 空间角 0° = 正右、顺时针增加；方位角 bearing 0° = 正北、
 - 提交信息：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:` / `test:` / `build:`），中文一句话 subject 即可
 - 每个罗盘 / 概念 / 工具函数变更独立一个 commit，便于回溯
 - 推送后通过 GitHub PR 合入；CI 检查（lint + typecheck + test）全绿方可 review
-- 部署：合入 `main` 后由 `.github/workflows/deploy.yml` 自动发布到 `https://andaoai.github.io/O/`
+- 部署：合入 `main` 后由 `.github/workflows/deploy.yml` 自动发布
+
+### 远端与部署（2026-10-30 起）
+
+| remote | 指向 | 用途 |
+|---|---|---|
+| `origin` | `github.com/erikgqp8645/O`（**本仓自有仓库，可写**） | 推送、开 PR、合入 |
+| `upstream` | `github.com/andaoai/O`（**只读参照**） | 拉取对照，**不推送** |
+
+- 公网站点：**<https://erikgqp8645.github.io/O/>**（由 `origin` 的 `main` 推送触发 `deploy.yml` 发布）
+- ⚠️ **URL 不带尾斜杠**：VitePress `cleanUrls` + GitHub Pages 的既有行为 —— `/compass/yixiang-luopan` ✅，`/compass/yixiang-luopan/` ❌ 404（上游站点同样如此，非本仓引入）
+- ⚠️ `deploy.yml` 的部署步骤带 `if: github.ref == 'refs/heads/main'` —— **PR 触发的运行不会发布**，只有合入 main 后的 push 才发布
+- fork 首次创建后，GitHub 需一次真实 push 才会索引并注册 `deploy.yml`（此前 workflow 列表为空、push 不生成 run）；`deploy.yml` 已加 `workflow_dispatch`，可手动重发
 
 ## Security
 
