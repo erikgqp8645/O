@@ -19,7 +19,8 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { cellAngles, normalizeAngle, ringSectorPath } from '@/utils/yixiang/geometry'
+import { cellAngles, fitHouName, normalizeAngle, ringSectorPath } from '@/utils/yixiang/geometry'
+import { SOLAR_TERM_BY_LONGITUDE } from '@/data/yixiang/solarTerms'
 
 /** 角度差归一到 [0, 360) */
 function diff(a: number, b: number): number {
@@ -182,5 +183,70 @@ describe('ringSectorPath（环形扇形路径）', () => {
     expect(path, '内弧应为逆时针（sweep=0）').toContain('A 100 100 0 0 0')
     expect(path, '路径应闭合').toMatch(/ Z$/)
     expect(path, '与顺序传入完全一致').toBe(ringSectorPath(300, 300, 100, 140, 0, 30))
+  })
+})
+
+/**
+ * fitHouName —— 七十二候的候名沿弧排布
+ *
+ * 候环每格仅 5°（半径 ~225px 处单格弧长约 19px），而候名多为 3~5 字，
+ * 沿弧排开必然超出单格。fitHouName 的职责是让名字整体容于「所属节气格」（15°），
+ * 这样既不会压到邻格分隔线（分隔线是朱砂描边，压上去就是「字不清楚」），
+ * 描边底色也始终取自本节气、不会盖错邻节颜色。
+ */
+describe('fitHouName（候名沿弧排布）', () => {
+  /** 候名所在半径（候环外圈，盘面坐标单位） */
+  const R_NAME = 224.7
+  /** 七十二候单格张角（度） */
+  const STEP = 5
+  /** 所属节气格半角（度） */
+  const TERM_HALF = 7.5
+  /** 字号上限 */
+  const MAX_FONT = 7.5
+
+  it('字号封顶 7.5 单位，且随字数自适应', () => {
+    expect(fitHouName(4, R_NAME, STEP, 0).fontSize, '四字名取上限').toBeCloseTo(MAX_FONT, 6)
+    // 数据里最长的候名是「天气上升地气下降」八字
+    const longest = Math.max(...SOLAR_TERM_BY_LONGITUDE.flatMap((t) => t.hou.map((h) => h.length)))
+    expect(longest, '最长候名').toBe(8)
+    const longFit = fitHouName(longest, R_NAME, STEP, 0)
+    expect(longFit.fontSize, '八字名不超过上限').toBeLessThanOrEqual(MAX_FONT + 1e-9)
+    expect(longFit.fontSize, '八字名仍够大').toBeGreaterThan(5)
+    const over = fitHouName(20, R_NAME, STEP, 0)
+    expect(over.fontSize, '超长名须缩小').toBeLessThan(MAX_FONT)
+    expect(over.fontSize, '字号须为正').toBeGreaterThan(0)
+  })
+
+  it('全部 72 候的名字都容于所属节气格（15°）之内', () => {
+    for (const term of SOLAR_TERM_BY_LONGITUDE) {
+      term.hou.forEach((name, j) => {
+        const { fontSize, angleOffset } = fitHouName(name.length, R_NAME, STEP, j - 1, 1)
+        const halfAngle = ((fontSize * name.length) / 2 / R_NAME) * (180 / Math.PI)
+        const center = (j - 1) * STEP + angleOffset
+        expect(
+          Math.abs(center) + halfAngle,
+          `${term.name} · 第${j + 1}候「${name}」越出节气格`
+        ).toBeLessThanOrEqual(TERM_HALF + 1e-9)
+      })
+    }
+  })
+
+  it('二候居中于节气格正中，名字不偏移', () => {
+    expect(fitHouName(4, R_NAME, STEP, 0).angleOffset).toBe(0)
+    expect(fitHouName(8, R_NAME, STEP, 0).angleOffset, '八字名仍以二候为基准').toBe(0)
+  })
+
+  it('一候 / 三候必要时向节气中心收拢', () => {
+    const first = fitHouName(8, R_NAME, STEP, -1, 1)
+    const third = fitHouName(8, R_NAME, STEP, 1, 1)
+    expect(first.angleOffset, '一候向内收').toBeGreaterThan(0)
+    expect(third.angleOffset, '三候向内收').toBeLessThan(0)
+    expect(Math.abs(first.angleOffset), '两侧收拢幅度相同').toBeCloseTo(Math.abs(third.angleOffset), 6)
+  })
+
+  it('逆时针排布时偏移方向相反', () => {
+    const cw = fitHouName(8, R_NAME, STEP, 1, 1)
+    const ccw = fitHouName(8, R_NAME, STEP, 1, -1)
+    expect(cw.angleOffset).toBeCloseTo(-ccw.angleOffset, 6)
   })
 })

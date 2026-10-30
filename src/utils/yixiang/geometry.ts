@@ -151,3 +151,53 @@ export function bearingToSvg(bearing: number): number {
 export function svgToBearing(svgAngle: number): number {
   return normalizeAngle(svgAngle - 90)
 }
+
+/** 候名沿弧排布的结果 */
+export interface HouNameFit {
+  /** 字号（px） */
+  fontSize: number
+  /** 相对候格中心的角度偏移（度，SVG 空间） */
+  angleOffset: number
+}
+
+/** 候名字号上限（px，盘面坐标系单位） */
+const HOU_NAME_MAX_FONT = 7.5
+
+/**
+ * 计算候名沿弧排布的字号与位置。
+ *
+ * 【为什么需要它】
+ * 七十二候每格只有 5°（候环半径 ~220px 处单格弧长约 19px），
+ * 而候名多为 3~5 字（如「草木黄落」），沿弧排开必然超出单格。
+ * 若一味让名字按单格居中，它会压到邻格的分隔线上（分隔线是朱砂描边），
+ * 看上去就是「候名不清楚」；更糟的是跨过所属节气格时，描边底色会盖错邻节的颜色。
+ *
+ * 【约束】
+ * 候名必须整体容于「所属节气格」（15° = 3 个候格）之内：
+ *   1. 字号按节气格弧宽与名字字数自适应（上限 7px）；
+ *   2. 若名字仍会越出节气格，则向节气中心收拢（角度偏移），保证底色始终正确。
+ *
+ * @param labelLength 候名字数
+ * @param radius      文字所在半径（px）
+ * @param cellStep    单个候格张角（度），七十二候环为 5
+ * @param cellOffset  候格在所属节气格内的序号偏移（格）：一候 −1、二候 0、三候 +1
+ * @param dir         排布方向：+1 顺时针，−1 逆时针
+ */
+export function fitHouName(
+  labelLength: number,
+  radius: number,
+  cellStep: number,
+  cellOffset: number,
+  dir: 1 | -1 = 1
+): HouNameFit {
+  const len = Math.max(labelLength, 1)
+  const termSpan = cellStep * 3 // 所属节气格张角（15°）
+  const termHalf = termSpan / 2
+  const termArc = (radius * termSpan * Math.PI) / 180
+  const fontSize = Math.min(HOU_NAME_MAX_FONT, termArc / len)
+  const halfAngle = ((fontSize * len) / 2 / radius) * (180 / Math.PI)
+  const maxOffset = Math.max(0, termHalf - halfAngle)
+  const raw = dir * cellOffset * cellStep
+  const clamped = Math.max(-maxOffset, Math.min(maxOffset, raw))
+  return { fontSize, angleOffset: clamped - raw }
+}

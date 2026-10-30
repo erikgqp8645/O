@@ -27,6 +27,9 @@ const pillars = computed(() => {
 
 const xun = computed(() => getXunKong(props.snapshot.dayGanzhi))
 
+/** 候序：盘面候环只标「一/二/三」，这里给出完整说法 */
+const houOrdinal = computed(() => ['一候', '二候', '三候'][props.snapshot.houIndex] ?? '')
+
 const stemColor = (g: string) => WUXING_COLOR[STEM_ELEMENT[g] ?? ''] ?? 'var(--ink-2)'
 const branchColor = (z: string) => WUXING_COLOR[BRANCH_ELEMENT[z] ?? ''] ?? 'var(--ink-2)'
 
@@ -63,7 +66,7 @@ const moon = computed(() => {
         <span class="tag">节气</span>
         <span class="val term">{{ snapshot.jieQi }}</span>
         <span class="tag">物候</span>
-        <span class="val">{{ snapshot.houName }}</span>
+        <span class="val hou">{{ houOrdinal }} {{ snapshot.houName }}</span>
       </div>
       <div class="row">
         <span class="tag">时辰</span>
@@ -168,6 +171,11 @@ const moon = computed(() => {
   font-weight: 600;
   color: var(--accent);
   font-size: 11px;
+}
+
+.val.hou {
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .foot {
