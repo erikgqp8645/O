@@ -27,10 +27,15 @@
  *
  *   出处：悟行阁《先天六十四卦方圆图解析》、易象乾坤《伏羲先天六十四卦圆图规律》。
  *
+ *   排布规则的**唯一实现**在 `@/utils/guaUtils`（站内先天六十四卦盘、卦关系页
+ *   的先天圆图布局与本模块共用），本模块只负责卦名与爻象等数据。
+ *
  * 【Unicode 卦符】
  *   U+4DC0..U+4DFF 按「文王卦序」排列（U+4DC0=䷀=乾=文王第1卦）。
  *   unicode = 0x4DC0 + 文王序 - 1。
  */
+
+import { XIANTIAN_POS_BY_VALUE } from '@/utils/guaUtils'
 
 /** 每卦圆心角步长（度） */
 export const GUA_STEP = 360 / 64
@@ -117,53 +122,23 @@ export const WENWANG_GUA_BY_VALUE: readonly GuaMeta[] = [
 ]
 
 /**
- * 圆图左半（冬至→夏至，阳顺）的内卦卦主
- */
-const XIANTIAN_LEFT_INNER: readonly string[] = ['震', '离', '兑', '乾']
-
-/** 圆图左半的外卦次序 */
-const XIANTIAN_LEFT_OUTER: readonly string[] = ['坤', '艮', '坎', '巽', '震', '离', '兑', '乾']
-
-/** 圆图右半（夏至→冬至，阴逆）的内卦卦主 */
-const XIANTIAN_RIGHT_INNER: readonly string[] = ['巽', '坎', '艮', '坤']
-
-/** 圆图右半的外卦次序 */
-const XIANTIAN_RIGHT_OUTER: readonly string[] = ['乾', '兑', '离', '震', '巽', '坎', '艮', '坤']
-
-/** 「外卦|内卦」→ 六爻 value */
-const VALUE_BY_TRIGRAM: ReadonlyMap<string, number> = new Map(
-  WENWANG_GUA_BY_VALUE.map((m) => [`${getOuterGuaName(m.value)}|${getInnerGuaName(m.value)}`, m.value])
-)
-
-/**
  * 伏羲六十四卦圆图的 64 卦次序（pos 0 起，bearing 顺时针）。
  *
  *   pos 0  = 地雷复（正北 · 冬至一阳生）
  *   pos 31 = 乾为天（正南）
  *   pos 32 = 天风姤（正南 · 夏至一阴生）
  *   pos 63 = 坤为地（正北）
+ *
+ * 位次由 `@/utils/guaUtils` 的**唯一权威排布规则**算出（站内先天六十四卦盘、
+ * 卦关系页的先天圆图布局与本模块共用同一实现，避免两套口径再次漂移）。
  */
 export const XIANTIAN_CIRCLE_ORDER: readonly string[] = (() => {
-  const out: string[] = []
-  const push = (inner: string, outer: string) => {
-    const value = VALUE_BY_TRIGRAM.get(`${outer}|${inner}`)
-    if (value === undefined) {
-      throw new Error(`[gua] 圆图排布找不到「外${outer}内${inner}」对应的卦 —— 数据源不一致`)
-    }
-    out.push(WENWANG_GUA_BY_VALUE[value]!.name)
+  const byPos = new Array<string>(64)
+  for (const meta of WENWANG_GUA_BY_VALUE) {
+    byPos[getXiantianPos(meta.value)] = meta.name
   }
-  for (const inner of XIANTIAN_LEFT_INNER) for (const outer of XIANTIAN_LEFT_OUTER) push(inner, outer)
-  for (const inner of XIANTIAN_RIGHT_INNER) for (const outer of XIANTIAN_RIGHT_OUTER) push(inner, outer)
-  return out
+  return byPos
 })()
-
-/** value → 圆周位次 */
-const XIANTIAN_POS_BY_VALUE: ReadonlyMap<number, number> = new Map(
-  XIANTIAN_CIRCLE_ORDER.map((name, pos) => {
-    const value = WENWANG_GUA_BY_VALUE.find((m) => m.name === name)!.value
-    return [value, pos] as const
-  })
-)
 
 /**
  * 先天圆周位置（0-63）
@@ -174,8 +149,8 @@ const XIANTIAN_POS_BY_VALUE: ReadonlyMap<number, number> = new Map(
  *   与圆图「复≡冬至、姤≡夏至，二者正对」的结构完全不符。
  */
 export function getXiantianPos(value: number): number {
-  const pos = XIANTIAN_POS_BY_VALUE.get(value)
-  if (pos === undefined) {
+  const pos = XIANTIAN_POS_BY_VALUE[value]
+  if (pos === undefined || pos < 0) {
     throw new Error(`[gua] 未知卦 value=${value}`)
   }
   return pos

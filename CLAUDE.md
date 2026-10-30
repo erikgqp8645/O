@@ -9,7 +9,7 @@ This is **乙巳观 (Yisiguan)** — 道由天观 — a personal Vue 3 + TypeScr
 Compasses currently shipped:
 
 - **六十甲子六环 (liushi-jiazi)** — six concentric 60-jiazi rings (year/month/day/hour/minute/second pillars) that track real time and highlight the current ganzhi cell on each ring.
-- **先天六十四卦盘 (sixty-four-gua)** — Fu Xi/Shao Yong's先天 circular diagram: 64 hexagrams arranged by binary bit-reversal order, Qian south Kun north, displaying hexagram symbols, names and six lines.
+- **先天六十四卦盘 (sixty-four-gua)** — Fu Xi/Shao Yong's先天 circular diagram: 64 hexagrams laid out by the Fuxi circle-order rules (time-ordered: 复≡冬至 and 姤≡夏至 diametrically opposite), Qian at the top and Kun at the bottom, displaying hexagram symbols, names and six lines.
 - **京房六日七分纳甲盘 (jingfang)** — Jing Fang's gua-qi (卦气) system centered on the "six-days-seven-fen" (六日七分) rule: 24 solar terms + 365-day ganzhi scale on the outside, 360 yao-position fine ticks (每爻 1°), the 60-gua yao-line ring, and the Huntian najia (浑天纳甲) ring — real-time highlight of the current gua and yao. 60 gua × 6 yao = 360 positions load the 365.25-day tropical year (≈ 6.0875 d/gua, ≈ 1.0146 d/yao).
 - **七曜入宿天象盘 (planet-mansion)** — celestial sky projection with polar equator, ecliptic and lunar orbit obliquity, sun/moon/five planets real-time positioning into 28 mansions, featuring point-based 24 solar terms outer ring.
 - **回归年闰月盘 (tropical-year)** — 365-day tropical year vs 360-degree jiazi year comparison, jie/zhongqi distinction of 24 solar terms, lunar months with leap-month highlight, real-time moon phase, illustrating the "no-zhongqi ⇒ leap month" rule.

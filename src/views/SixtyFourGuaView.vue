@@ -14,7 +14,7 @@ import { XIANTIAN_64_GUA } from '../data/sixtyFourGua'
  * 先天六十四卦盘 + 京房八宫世应盘
  *
  * 由外到内四层：
- *   1. 先天伏羲卦符环 GuaRing（乾南坤北，按二进制位反转）
+ *   1. 先天伏羲卦符环 GuaRing（乾居正上、坤居正下，按伏羲圆图排布规则）
  *   2. 京房八宫卦名环 JingFangEightPalaceRing（乾坎艮震巽离坤兑各 8 卦，同宫共色）
  *   3. 世应环 ShiYingRing（本宫/一世/…/游魂/归魂，与京房环一一对齐）
  *   4. 中央 8×8 伏羲方图

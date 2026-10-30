@@ -2,7 +2,7 @@
  * 先天六十四卦（伏羲 / 邵雍先天圆图）数据与算法
  *
  * 把「六十四卦如何排成先天圆图」这一领域知识从渲染层抽离：
- * 组件只消费成品 XIANTIAN_64_GUA，不在模板里推导位反转 / 文王序 / Unicode / 角度。
+ * 组件只消费成品 XIANTIAN_64_GUA，不在模板里推导位次 / 文王序 / Unicode / 角度。
  *
  * 【二进制编码 value】
  *   一卦六爻自下而上为 bit0..bit5，阳爻=1、阴爻=0，value = 0..63。
@@ -10,17 +10,23 @@
  *   八经卦 bit 值：坤☷=0、震☳=1、坎☵=2、兑☱=3、艮☶=4、离☲=5、巽☴=6、乾☰=7。
  *   故 value = 下卦值 + 上卦值 * 8。
  *
- * 【先天圆周位置 pos = bitReverse6(value)】
- *   邵雍先天圆图按六爻二进制的「位反转」定圆周次序。
- *   验证：坤(value0)→pos0、姤(value62)→pos31、复(value1)→pos32、乾(value63)→pos63；
- *   自复(pos32)递增即得「复颐屯益震噬嗑随无妄…」经典次序。
+ * 【先天圆周位置 pos】由伏羲圆图的**排布规则**算出（`@/utils/guaUtils` 的
+ *   `XIANTIAN_POS_BY_VALUE` / `getXiantianPos`），**不是**六爻位反转：
+ *     pos 0  = 地雷复（冬至，一阳生）
+ *     pos 31 = 乾为天
+ *     pos 32 = 天风姤（夏至，一阴生）
+ *     pos 63 = 坤为地
+ *   故复≡冬至、姤≡夏至，二者正对；乾、坤亦正对。
+ *   圆图 64 卦互异，与通行圆图名单逐字一致（见 `src/utils/guaUtils.spec.ts`）。
+ *   ⚠️ 早前版本用 6 位整体位反转定次序，会把左右两个半圆对调
+ *     （坤与乾首尾相邻、姤紧贴乾），阴阳两极挤在同一侧，与圆图结构完全不符。
  *
  * 【屏幕角度（SVG 空间，已含上下翻转）】
  *   PolarCanvas 坐标 x=cos·r、y=sin·r，SVG 中 y 向下：0°在正右、90°在正下、270°在正上、顺时针。
- *   先天圆图要乾居顶、坤居底且对径相对，两仪各占半圆：
- *     阳仪 pos>=32：centerAngle = 270 + (63 - pos) * GUA_STEP   → 乾(pos63)=270 顶，沿右半下行
- *     阴仪 pos<=31：centerAngle = 270 - (32 - pos) * GUA_STEP   → 坤(pos0)=90 底，沿左半上行
- *   乾(顶,270°)与坤(底,90°)恰好对径；右半阳仪、左半阴仪。
+ *   圆图以乾居正上、坤居正下为轴：
+ *     乾(pos31) = 270° 正上，姤(pos32) = 275.625° 紧邻其右（顺时针），
+ *     坤(pos63) = 90° 正下，复(pos0) = 95.625° 紧邻坤之左。
+ *   两仪各占半圆：阳仪 pos<=31（复…乾）在左半，阴仪 pos>=32（姤…坤）在右半。
  *
  * 【Unicode 卦符】U+4DC0..U+4DFF 按「文王卦序」排列（U+4DC0=䷀=乾=文王第1卦）。
  *   文王序无规律 → 必须硬编码 value→{文王序,卦名} 映射；unicode = 0x4DC0 + 文王序 - 1。
@@ -60,7 +66,7 @@ export interface GuaMeta {
 
 /** 先天圆图上某一卦的渲染就绪数据 */
 export interface XiantianGuaItem extends GuaMeta {
-  /** 先天圆周位置 0-63（= bitReverse6(value)） */
+  /** 先天圆周位置 0-63（由伏羲圆图排布规则算出，非位反转） */
   pos: number
   /** Unicode 卦符字符（如 ䷀） */
   unicode: string
@@ -146,14 +152,36 @@ export const WENWANG_GUA_BY_VALUE: readonly GuaMeta[] = [
   { value: 63, name: '乾', wenwangOrder: 1 }
 ]
 
-/** 6 位整体位反转：bit0↔bit5, bit1↔bit4, bit2↔bit3 */
+/** 纯函数工具：六爻提取、先天圆图位次、Unicode 卦符 */
 import { getGuaLines, getXiantianPos, getUnicodeHexagram } from '@/utils/guaUtils'
 
-/** 由先天位置 pos 取圆心角（SVG 空间，度）。乾顶坤底、两仪对称。 */
+/**
+ * 先天圆图 64 卦卦名序（按 pos 0→63 升序）。
+ *
+ * pos 0 = 地雷复（冬至）… pos 31 = 乾、pos 32 = 天风姤（夏至）… pos 63 = 坤为地。
+ */
+export const XIANTIAN_CIRCLE_ORDER: readonly string[] = (() => {
+  const byPos = new Array<string>(64)
+  for (const meta of WENWANG_GUA_BY_VALUE) {
+    byPos[getXiantianPos(meta.value)] = meta.name
+  }
+  return byPos
+})()
+
+/**
+ * 由先天位置 pos 取圆心角（SVG 空间，度）。乾居正上、坤居正下，两仪对径。
+ *
+ *   乾(pos31)=270° 正上 → 姤(pos32)=275.625° 紧右 → … → 坤(pos63)=90° 正下
+ *   → 复(pos0)=95.625° 紧左 → … → 夬(pos30)=264.375° 紧左于乾
+ *
+ * 阳仪（复…乾，pos<=31）居左半，阴仪（姤…坤，pos>=32）居右半。
+ */
 export function getXiantianCenterAngle(pos: number): number {
-  return pos >= 32
-    ? 270 + (63 - pos) * GUA_STEP // 阳仪：乾(pos63)=270 顶，沿右半下行
-    : 270 - (32 - pos) * GUA_STEP // 阴仪：坤(pos0)=90 底，沿左半上行
+  const angle =
+    pos <= 31
+      ? 270 - (31 - pos) * GUA_STEP // 阳仪：复(pos0)=95.625 → 乾(pos31)=270，沿左半上行
+      : 270 + (pos - 31) * GUA_STEP // 阴仪：姤(pos32)=275.625 → 坤(pos63)=450≡90，沿右半下行
+  return ((angle % 360) + 360) % 360
 }
 
 /**
