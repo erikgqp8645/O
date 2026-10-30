@@ -136,6 +136,7 @@ SVG 空间角 0° = 正右、顺时针增加；方位角 bearing 0° = 正北、
 - 公网站点：**<https://erikgqp8645.github.io/O/>**（由 `origin` 的 `main` 推送触发 `deploy.yml` 发布）
 - ⚠️ **URL 不带尾斜杠**：VitePress `cleanUrls` + GitHub Pages 的既有行为 —— `/compass/yixiang-luopan` ✅，`/compass/yixiang-luopan/` ❌ 404（上游站点同样如此，非本仓引入）
 - ⚠️ `deploy.yml` 的部署步骤带 `if: github.ref == 'refs/heads/main'` —— **PR 触发的运行不会发布**，只有合入 main 后的 push 才发布
+- ⚠️ **`gh` 命令必须显式 `--repo erikgqp8645/O`**：本仓有 `upstream`（andaoai/O）只读远端，`gh` 会把它当成默认仓库，导致 `gh pr create` 报「Head sha can't be blank / No commits between main and …」（分支其实在 fork 上、push 正常）
 - fork 首次创建后，GitHub 需一次真实 push 才会索引并注册 `deploy.yml`（此前 workflow 列表为空、push 不生成 run）；`deploy.yml` 已加 `workflow_dispatch`，可手动重发
 
 ## Security
