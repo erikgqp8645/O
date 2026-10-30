@@ -41,6 +41,12 @@ function bearingOfCell(layout: RingLayout, index: number, dir: 1 | -1 = 1): numb
   return svgToBearing(layout.startAngle + dir * (index + 0.5) * step)
 }
 
+/** 环内第 index 格的圆心方位角，落在 [-180°, 180°) 区间（便于做区间断言） */
+function signedBearing(layout: RingLayout, index: number, dir: 1 | -1 = 1): number {
+  const b = bearingOfCell(layout, index, dir)
+  return ((b + 540) % 360) - 180
+}
+
 /** 锚点实际落点（等分格算圆心，起算格算起点） */
 function anchorLanding(layout: RingLayout, dir: 1 | -1 = 1): number {
   const a = layout.anchor!
@@ -104,11 +110,36 @@ describe('方位锚点：各环对位', () => {
     expect(at('秋分')).toBeCloseTo(270, 6)
   })
 
-  it('七十二候：与所属节气同轴', () => {
+  it('七十二候：三候严格三等分所属节气格（每候 5°，一候起于节气起点）', () => {
     const hou = ring('hou')
     const terms = ring('terms')
+    const stepT = 360 / terms.count
+    const stepH = 360 / hou.count
+    for (let i = 0; i < SOLAR_TERM_BY_LONGITUDE.length; i++) {
+      const termStart = terms.startAngle + i * stepT
+      const termName = SOLAR_TERM_BY_LONGITUDE[i]!.name
+      for (let j = 0; j < 3; j++) {
+        const houStart = hou.startAngle + (i * 3 + j) * stepH
+        expect(houStart, `${termName} 第${j + 1}候未与节气格边界对齐`).toBeCloseTo(
+          termStart + j * stepH,
+          6
+        )
+      }
+    }
+  })
+
+  it('七十二候：冬至三候全部落在子中 ±7.5° 内，不越入小寒格', () => {
+    const hou = ring('hou')
     const termIdx = SOLAR_TERM_BY_LONGITUDE.findIndex((t) => t.name === '冬至')
-    expect(bearingOfCell(hou, termIdx * 3)).toBeCloseTo(bearingOfCell(terms, termIdx), 6)
+    for (let j = 0; j < 3; j++) {
+      const mid = signedBearing(hou, termIdx * 3 + j)
+      expect(mid, `冬至第${j + 1}候越出了冬至格`).toBeGreaterThan(-7.5 - 1e-9)
+      expect(mid, `冬至第${j + 1}候越出了冬至格`).toBeLessThan(7.5 + 1e-9)
+    }
+    // 三候自西向东依次：初候 -5° → 二候 0°（子中）→ 三候 +5°
+    expect(signedBearing(hou, termIdx * 3)).toBeCloseTo(-5, 6)
+    expect(signedBearing(hou, termIdx * 3 + 1)).toBeCloseTo(0, 6)
+    expect(signedBearing(hou, termIdx * 3 + 2)).toBeCloseTo(5, 6)
   })
 
   it('八卦：乾居正南、坤居正北、离居正东、坎居正西（卦格居中于方位）', () => {

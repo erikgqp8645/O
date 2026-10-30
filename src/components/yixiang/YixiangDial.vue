@@ -46,7 +46,8 @@ import {
   textTransform,
   polar,
   normalizeAngle,
-  cellAngles
+  cellAngles,
+  fitHouName
 } from '@/utils/yixiang/geometry'
 import { hexagramRects, cellContentLayout } from '@/utils/yixiang/hexagram'
 import {
@@ -234,26 +235,52 @@ const houRing = computed(() => {
   const step = stepOf(layout)
   const currentTerm = SOLAR_TERM_MAP[props.snapshot.jieQi]
   const currentHou = props.snapshot.houName
+  const depth = ro - ri
+  const rMid = (ri + ro) / 2
+  // 72 格在 rMid 处单格弧长约 19 单位
+  const arc = (rMid * step * Math.PI) / 180
+  // 序号放内圈、当前候名放外圈，互不挤占。
+  // 「一/二/三」只有横画，字号不够大就看不出来 —— 故序号取 10 单位并加粗。
+  const ordinalFont = Math.min(Math.max(arc * 0.55, 4), 10)
+  const rOrdinal = ri + depth * 0.26
+  // 候名沿弧排在外圈，可用宽度以「所属节气格」（15°）为界：
+  // 越出节气格就会压到邻节气的分隔线，且描边色会盖错底色。
+  const rName = ro - depth * 0.24
   const out: {
     key: string
     path: string
     label: string
+    ordinal: string
     color: string
     active: boolean
+    inCurrentTerm: boolean
+    ordinalTransform: string
+    nameTransform: string
+    ordinalFontSize: number
+    nameFontSize: number
     title: string
   }[] = []
   SOLAR_TERM_BY_LONGITUDE.forEach((t, i) => {
     t.hou.forEach((h, j) => {
       const { a0, a1, mid } = cellAngles(layout.startAngle, step, i * 3 + j, dir.value)
+      const inCurrentTerm = t.name === currentTerm?.name
+      // 候名字号与位置：由 fitHouName 保证整体容于所属节气格，不压邻格分隔线
+      const len = Math.max(h.length, 1)
+      const { fontSize: nameFont, angleOffset } = fitHouName(len, rName, step, j - 1, dir.value)
       out.push({
         key: `hou-${t.name}-${j}`,
         path: ringSectorPath(CX, CY, ri, ro, a0, a1),
         label: h,
+        ordinal: ['一', '二', '三'][j] ?? '·',
         color: SEASON_COLOR[t.season] ?? 'var(--ink-3)',
-        active: t.name === currentTerm?.name && h === currentHou,
+        active: inCurrentTerm && h === currentHou,
+        inCurrentTerm,
+        ordinalTransform: textTransform(CX, CY, rOrdinal, mid),
+        nameTransform: textTransform(CX, CY, rName, normalizeAngle(mid + angleOffset)),
+        ordinalFontSize: ordinalFont,
+        nameFontSize: Number(nameFont.toFixed(2)),
         title: `${t.name} · 第${['一', '二', '三'][j]}候：${h}`
       })
-      void mid
     })
   })
   return out
@@ -515,8 +542,8 @@ const currentHouMark = computed(() => {
   const termIdx = SOLAR_TERM_BY_LONGITUDE.findIndex((t) => t.name === currentTerm.name)
   if (termIdx < 0) return null
   const a = cellAngles(layout.startAngle, step, termIdx * 3 + props.snapshot.houIndex, dir.value).mid
-  // 标记点画在候环外缘
-  const rMark = layout.rOuter * R + 4
+  // 标记点画在候环外缘（再外推一点，避免压住外圈的当前候名）
+  const rMark = layout.rOuter * R + 5.5
   const [cx, cy] = polar(CX, CY, rMark, a)
   return { cx, cy }
 })
@@ -683,7 +710,8 @@ const hasAnyRing = computed(() => layouts.value.length > 0)
       </g>
     </g>
 
-    <!-- 七十二候：72 格过密，仅高亮当前候显示文字，其余靠悬停提示 -->
+    <!-- 七十二候：72 格过密。每格标出「第X候」序号，一眼可辨一/二/三的先后；
+         当前候另补一个候名（可溢出本格，邻格此时只有内圈序号，不会打架）；其余靠悬停提示 -->
     <g class="ring ring-hou">
       <g v-for="s in houRing" :key="s.key" @mouseenter="onEnter(s.title)">
         <path
@@ -691,6 +719,22 @@ const hasAnyRing = computed(() => layouts.value.length > 0)
           :fill="s.color"
           :class="['sector', 'sector-thin', { 'is-active': s.active }]"
         />
+        <text
+          :transform="s.ordinalTransform"
+          class="cell-text cell-hou-ordinal"
+          :class="{ 'is-current': s.inCurrentTerm }"
+          :style="{ fontSize: `${s.ordinalFontSize}px` }"
+        >
+          {{ s.ordinal }}
+        </text>
+        <text
+          v-if="s.active"
+          :transform="s.nameTransform"
+          class="cell-text cell-hou-name"
+          :style="{ fontSize: `${s.nameFontSize}px`, stroke: s.color }"
+        >
+          {{ s.label }}
+        </text>
         <title>{{ s.title }}</title>
       </g>
     </g>
@@ -790,8 +834,8 @@ const hasAnyRing = computed(() => layouts.value.length > 0)
 
     <!-- 当前候标记（高亮格外缘的三角标，不遮挡文字） -->
     <g v-if="currentHouMark" class="hou-mark">
-      <circle :cx="currentHouMark.cx" :cy="currentHouMark.cy" r="3" class="hou-dot" />
-      <circle :cx="currentHouMark.cx" :cy="currentHouMark.cy" r="7" class="hou-ring" />
+      <circle :cx="currentHouMark.cx" :cy="currentHouMark.cy" r="5" class="hou-ring" />
+      <circle :cx="currentHouMark.cx" :cy="currentHouMark.cy" r="2.8" class="hou-dot" />
     </g>
 
     <!-- 当前时刻指针 -->
@@ -888,6 +932,28 @@ const hasAnyRing = computed(() => layouts.value.length > 0)
 
 .cell-term {
   font-weight: 600;
+}
+
+/* 七十二候：序号（内圈）与当前候名（外圈） */
+.cell-hou-ordinal {
+  fill: var(--ink-2);
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+.cell-hou-ordinal.is-current {
+  fill: var(--accent);
+  opacity: 1;
+  font-weight: 700;
+}
+
+.cell-hou-name {
+  fill: var(--ink-1);
+  font-weight: 700;
+  /* 先描边后填字：描边取该格底色，把穿过的扇形分隔线让到字下面，候名才清楚 */
+  paint-order: stroke fill;
+  stroke-width: 3.4px;
+  stroke-linejoin: round;
 }
 
 .cell-pi {

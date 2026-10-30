@@ -140,8 +140,16 @@ export const RING_ANCHORS: Readonly<Record<string, RingAnchor>> = Object.freeze(
   terms: { label: '冬至', bearing: 0, index: TERM_WINTER_SOLSTICE },
   /** 十二辟卦：复卦位在冬至（正北），大壮在春分、姤在夏至、观在秋分 */
   pi: { label: '复', bearing: 0, index: 0 },
-  /** 七十二候：与所属节气同轴 */
-  hou: { label: '冬至初候', bearing: 0, index: TERM_WINTER_SOLSTICE * 3 },
+  /**
+   * 七十二候：每节气 15° 三等分为三候（各 5°），候格必须与所属节气格严格平分。
+   *
+   * 冬至居正北且其格跨 bearing [-7.5°, +7.5°]，故以「冬至二候」居中于子中（bearing 0）为锚，
+   * 三候即 [-7.5,-2.5] / [-2.5,2.5] / [2.5,7.5]，恰好铺满冬至格。
+   *
+   * ⚠️ 若把锚设在「冬至初候」，整环会后移一个候格（5°），冬至三候便越入小寒格、
+   *    每个节气都出现「上一节气的第三候」压在本节气头上 —— 看上去就是「一候二候三候顺序不对」。
+   */
+  hou: { label: '冬至二候', bearing: 0, index: TERM_WINTER_SOLSTICE * 3 + 1 },
   /** 六十甲子：甲子与子中同轴 */
   jiazi: { label: '甲子', bearing: 0, index: indexOf(JIA_ZI, '甲子', (j) => j.name) },
   /** 纳甲六十四卦：坎为水直冬至（京房四正卦主二分二至） */
@@ -234,18 +242,18 @@ export const RING_LAYOUTS: readonly RingLayout[] = [
   {
     key: 'hou',
     label: '七十二候',
-    rInner: 0.552,
+    rInner: 0.532,
     rOuter: 0.61,
     count: 72,
     startAngle: 0,
     anchor: RING_ANCHORS.hou,
-    description: '每节气三候，与所属节气同轴'
+    description: '每节气三候，与所属节气同轴；环带加宽以容下「一/二/三」序号与当前候名'
   },
   {
     key: 'jiazi',
     label: '六十甲子',
     rInner: 0.474,
-    rOuter: 0.547,
+    rOuter: 0.527,
     count: 60,
     startAngle: 0,
     anchor: RING_ANCHORS.jiazi,
