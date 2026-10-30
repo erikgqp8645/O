@@ -25,47 +25,82 @@ export interface UseSidebarLayoutOptions<K extends string> {
   defaultExpanded?: boolean
 }
 
+/**
+ * 展开/折叠状态 = 模块级单例
+ *
+ * 侧栏之外的组件也需要读这个状态：左上角常驻的「← 罗盘一览」浮标
+ * 在桌面端侧栏展开（占左侧 260px）时必须右移让位，
+ * 所以两者必须共享同一份响应式 ref，而不是各自维护一份。
+ *
+ * 与 useCompassContext 同样的模块级单例做法。
+ */
+const expanded = ref<boolean>(false)
+/** 是否已有调用方初始化过默认值（避免后调用的组件覆盖首次默认值） */
+let expandedInitialized = false
+
+function loadExpanded() {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(EXPANDED_KEY)
+    if (raw === null) return
+    const parsed = JSON.parse(raw)
+    if (parsed?.v !== SCHEMA_VERSION) return
+    if (typeof parsed.expanded === 'boolean') expanded.value = parsed.expanded
+  } catch {
+    /* ignore */
+  }
+}
+
+function saveExpanded() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(
+      EXPANDED_KEY,
+      JSON.stringify({ v: SCHEMA_VERSION, expanded: expanded.value })
+    )
+  } catch {
+    /* ignore */
+  }
+}
+
+const toggleExpanded = () => {
+  expanded.value = !expanded.value
+  saveExpanded()
+}
+
+const expand = () => {
+  expanded.value = true
+  saveExpanded()
+}
+
+const collapse = () => {
+  expanded.value = false
+  saveExpanded()
+}
+
+/**
+ * 只读订阅侧栏展开状态
+ *
+ * 给侧栏之外的浮标组件用（如「← 罗盘一览」按钮）：
+ * 想跟着侧栏让位，但自己不负责展开 / 收起。
+ */
+export function useSidebarExpanded() {
+  return {
+    expanded: computed(() => expanded.value),
+    toggleExpanded,
+    expand,
+    collapse
+  }
+}
+
 export function useSidebarLayout<K extends string>(opts: UseSidebarLayoutOptions<K>) {
   const { sectionKeys, defaultCollapsed = {}, defaultExpanded = true } = opts
 
-  // ─── 展开/折叠 ─────────────────────────────────────────────
-  const expanded = ref<boolean>(defaultExpanded)
-
-  function loadExpanded() {
-    if (typeof window === 'undefined') return
-    try {
-      const raw = window.localStorage.getItem(EXPANDED_KEY)
-      if (raw === null) return
-      const parsed = JSON.parse(raw)
-      if (parsed?.v !== SCHEMA_VERSION) return
-      if (typeof parsed.expanded === 'boolean') expanded.value = parsed.expanded
-    } catch {
-      /* ignore */
-    }
-  }
-  function saveExpanded() {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(
-        EXPANDED_KEY,
-        JSON.stringify({ v: SCHEMA_VERSION, expanded: expanded.value })
-      )
-    } catch {
-      /* ignore */
-    }
-  }
-
-  const toggleExpanded = () => {
-    expanded.value = !expanded.value
-    saveExpanded()
-  }
-  const expand = () => {
-    expanded.value = true
-    saveExpanded()
-  }
-  const collapse = () => {
-    expanded.value = false
-    saveExpanded()
+  // ─── 展开/折叠（模块级单例） ───────────────────────────────
+  // 首次调用方决定默认值，后续调用方不再覆盖
+  if (!expandedInitialized) {
+    expanded.value = defaultExpanded
+    expandedInitialized = true
   }
 
   // ─── 各 section 折叠状态 ──────────────────────────────────

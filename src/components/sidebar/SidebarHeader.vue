@@ -7,6 +7,10 @@ import { useCompassMeta } from '@/composables/useCompassMeta'
  *
  * 收起 / 展开由左中常驻悬浮把手 SidebarToggleHandle 承担，
  * 这里不再重复放置收起按钮，避免"两个按钮两处位置"的割裂感。
+ *
+ * 返回入口分工：
+ *   · 本处「← 首页」→ 站点首页 /（罗盘一览页的右上角浮标是另一条通道）
+ *   · 右上角常驻「← 罗盘一览」→ /compass/，不依赖侧栏展开
  */
 
 const { meta } = useCompassMeta()
@@ -15,9 +19,9 @@ const { meta } = useCompassMeta()
 <template>
   <header class="s-header">
     <div class="s-header__top">
-      <a :href="withBase('/compass/')" class="back-link" title="返回罗盘列表">
+      <a :href="withBase('/')" class="back-link" title="返回站点首页 · 乙巳观">
         <span class="back-arrow">←</span>
-        <span class="back-text">罗盘列表</span>
+        <span class="back-text">首页</span>
       </a>
     </div>
     <div v-if="meta" class="s-header__title">

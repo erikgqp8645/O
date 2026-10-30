@@ -20,9 +20,8 @@
  */
 import { WENWANG_GUA_BY_VALUE } from '@/data/sixtyFourGua'
 import { bitReverse6, getUnicodeHexagram } from '@/utils/guaUtils'
-import { JING_FANG_64_GUA, JING_FANG_64_GUA_BY_VALUE } from '@/data/rings/jingFangEightPalaces'
+import { JING_FANG_64_GUA_BY_VALUE } from '@/data/rings/jingFangEightPalaces'
 import { FEIFU_TABLE } from './guaRelationArrows'
-import { type GuaLayout, FEIFU_PALACE_ORDER, getGuaAngle, PURE_GUA_VALUES } from './guaLayoutConstants'
 // ─── 关系类型定义 ───
 
 /** 支持的卦关系类型 */

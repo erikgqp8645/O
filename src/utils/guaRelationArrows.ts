@@ -58,7 +58,7 @@ import { JING_FANG_64_GUA, JING_FANG_64_GUA_BY_VALUE } from '@/data/rings/jingFa
 import { WENWANG_GUA_BY_VALUE } from '@/data/sixtyFourGua'
 import { getUnicodeHexagram } from '@/utils/guaUtils'
 import type { ShiyingType } from '@/data/rings/jingFangEightPalaces'
-import { type GuaLayout, FEIFU_PALACE_ORDER, getGuaAngle } from './guaLayoutConstants'
+import { type GuaLayout, getGuaAngle } from './guaLayoutConstants'
 
 // ─── 布局类型 ───
 

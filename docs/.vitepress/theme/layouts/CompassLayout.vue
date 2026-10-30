@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CompassSidebar from '@/components/sidebar/CompassSidebar.vue'
+import CompassListButton from '@/components/sidebar/CompassListButton.vue'
 
 /**
  * 罗盘全屏 Layout
@@ -13,6 +14,8 @@ import CompassSidebar from '@/components/sidebar/CompassSidebar.vue'
  *     · Sidebar 挂载点唯一，跨 9 个 View 共享
  *     · View 层通过 provideCompassContext 暴露 time/viewport 给 Sidebar
  *     · 侧栏折叠时通过 transform: translateX(-100%) 移出，罗盘容器 flex:1 撑满
+ *     · 右上角常驻 CompassListButton：全屏 layout 没有 VitePress 的 nav/logo，
+ *       侧栏又默认收起，这里给一个不依赖侧栏的「← 罗盘一览」入口
  * ═══════════════════════════════════════════════════════════════
  *
  * frontmatter 声明：
@@ -31,6 +34,7 @@ import CompassSidebar from '@/components/sidebar/CompassSidebar.vue'
 <template>
   <div class="compass-layout">
     <CompassSidebar />
+    <CompassListButton />
     <div class="compass-layout__content">
       <Content />
     </div>

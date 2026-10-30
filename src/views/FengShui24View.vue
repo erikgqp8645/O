@@ -30,6 +30,7 @@ import { usePhoneOrientation } from '@/composables/usePhoneOrientation'
 import { useMagneticDeclination } from '@/composables/useMagneticDeclination'
 import { useTrueHeading } from '@/composables/useTrueHeading'
 import { useViewport } from '@/composables/useViewport'
+import { useAltDragPan } from '@/composables/useAltDragPan'
 import { provideCompassContext } from '@/composables/useCompassContext'
 import RingStack from '@/components/base/RingStack.vue'
 import TwentyFourMountainsRing from '@/components/rings/fengshui24/TwentyFourMountainsRing.vue'
@@ -81,6 +82,10 @@ provideCompassContext({ time: controlledTime, viewport })
 
 // ─── SVG ref ────────────────────────────────────────────
 const svgRef = ref<SVGSVGElement | null>(null)
+
+// ─── 视口交互：滚轮以光标为锚缩放 / 双击放大 / 中键或 Alt+拖拽平移 ──
+// （此前本视图漏接 useAltDragPan，是全站唯一无法缩放查看的罗盘）
+const { isDragging, isAltPressed } = useAltDragPan({ svgRef, viewport })
 
 // ─── 定位标签（兼顾超长精度值） ─────────────────────────
 const geoLabel = computed(() => {
@@ -336,6 +341,7 @@ const showGeoPermission = computed(() =>
     <svg
       ref="svgRef"
       class="compass-svg"
+      :class="{ 'alt-hover': isAltPressed && !isDragging, 'alt-dragging': isDragging }"
       viewBox="0 0 1200 1200"
       preserveAspectRatio="xMidYMid meet"
     >
@@ -396,6 +402,15 @@ const showGeoPermission = computed(() =>
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Alt 按下 → grab；拖拽中 → grabbing（与站内其它罗盘一致） */
+.compass-svg.alt-hover {
+  cursor: grab;
+}
+
+.compass-svg.alt-dragging {
+  cursor: grabbing;
 }
 
 /* ═══════════════════════════════════════════════════════
