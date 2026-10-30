@@ -26,7 +26,7 @@
  *   七十二候    与所属节气同轴
  *   二十八宿    巽中起角木蛟，逆行二十四山
  *   周天刻度    0° 在正北（子中）
- *   先天六十四卦 乾为天居正南（圆周位次 pos 尚待复核，对位随 pos 自动跟随）
+ *   先天六十四卦 地雷复居正北（冬至）、天风姤居正南（夏至）——伏羲圆图的阴阳转换点
  */
 
 import { XIANTIAN_64_GUA, JING_FANG_64_GUA } from '@/data/yixiang/gua'
@@ -128,11 +128,15 @@ export const RING_ANCHORS: Readonly<Record<string, RingAnchor>> = Object.freeze(
   scale: { label: '0°', bearing: 0, index: 0, mode: 'start' },
   /** 二十八宿：角宿起于巽山（后天巽位在东南）中线，逆行二十四山 */
   mansions: { label: '角', bearing: 135, index: 0, mode: 'start' },
-  /** 先天六十四卦：乾为天居正南 */
+  /**
+   * 先天六十四卦（伏羲圆图）：地雷复居正北（冬至一阳生）、天风姤居正南（夏至一阴生），
+   * 二者正对，且与十二辟卦环的复/姤完全重合。
+   * 圆图方位「上南见乾、下北见坤」，本盘把整图旋转半格，使两个阴阳转换点精确落在子/午。
+   */
   gua: {
-    label: '乾',
-    bearing: 180,
-    index: indexOf(XIANTIAN_64_GUA, '乾', (g) => g.name)
+    label: '复',
+    bearing: 0,
+    index: indexOf(XIANTIAN_64_GUA, '复', (g) => g.name)
   },
   /** 八卦：乾居正南（先天方位） */
   bagua: { label: '乾', bearing: 180, index: 6 },
@@ -207,7 +211,7 @@ export const RING_LAYOUTS: readonly RingLayout[] = [
     count: 64,
     startAngle: 0,
     anchor: RING_ANCHORS.gua,
-    description: '先天圆图，乾为天居正南'
+    description: '伏羲圆图，地雷复居正北（冬至）、天风姤居正南（夏至）'
   },
   {
     key: 'bagua',

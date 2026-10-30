@@ -171,9 +171,35 @@ describe('方位锚点：各环对位', () => {
     expect(bearingOfCell(l, JIA_ZI.findIndex((j) => j.name === '甲子'))).toBeCloseTo(0, 6)
   })
 
-  it('先天六十四卦：乾为天居正南', () => {
+  it('先天六十四卦：地雷复居正北（冬至）、天风姤居正南（夏至），二者正对', () => {
     const l = ring('gua')
-    expect(bearingOfCell(l, idxOf(XIANTIAN_64_GUA, '乾'))).toBeCloseTo(180, 6)
+    const at = (name: string) => bearingOfCell(l, idxOf(XIANTIAN_64_GUA, name))
+    expect(at('复'), '复未落在子中').toBeCloseTo(0, 6)
+    expect(at('姤'), '姤未落在午中').toBeCloseTo(180, 6)
+    // 复与姤隔 32 格（180°），乾为天 / 坤为地同样正对
+    expect(idxOf(XIANTIAN_64_GUA, '姤') - idxOf(XIANTIAN_64_GUA, '复'), '复姤未正对').toBe(32)
+    expect(idxOf(XIANTIAN_64_GUA, '坤') - idxOf(XIANTIAN_64_GUA, '乾'), '乾坤未正对').toBe(32)
+    // 圆图方位「上南见乾、下北见坤」：本盘整体旋转半格，使复/姤精确落在子/午，
+    // 于是乾偏到正南以东半格、坤偏到正北以西半格
+    expect(signedBearing(l, idxOf(XIANTIAN_64_GUA, '乾')), '乾应在正南偏东半格').toBeCloseTo(
+      174.375,
+      6
+    )
+    expect(signedBearing(l, idxOf(XIANTIAN_64_GUA, '坤')), '坤应在正北偏西半格').toBeCloseTo(
+      -5.625,
+      6
+    )
+  })
+
+  it('先天六十四卦：与十二辟卦环的复/姤两卦逐点重合', () => {
+    const gua = ring('gua')
+    const pi = ring('pi')
+    for (const name of ['复', '姤'] as const) {
+      expect(bearingOfCell(gua, idxOf(XIANTIAN_64_GUA, name)), `${name} 与十二辟卦环未重合`).toBeCloseTo(
+        bearingOfCell(pi, idxOf(PI_GUA, name)),
+        6
+      )
+    }
   })
 
   it('周天刻度：0° 刻线在正北', () => {
