@@ -7,10 +7,25 @@
  *   八经卦 bit 值：坤=0、震=1、坎=2、兑=3、艮=4、离=5、巽=6、乾=7（乾三爻皆阳=111=7，坤=000=0）。
  *   故 value = 下卦值 + 上卦值 × 8。
  *
- * 【先天圆周位置 pos = bitReverse6(value)】
- *   邵雍先天圆图按六爻二进制的「位反转」定圆周次序。
- *   验证：坤(value0)→pos0、姤(value62)→pos31、复(value1)→pos32、乾(value63)→pos63；
- *   自复(pos32)递增即得「复颐屯益震噬嗑随无妄…」经典次序。
+ * 【先天圆图位次 pos】
+ *   邵雍伏羲六十四卦圆图。圆图方位「上南见乾、下北见坤、左东右西」，
+ *   以**时间**为序（圆图象天、方图象地），分左右两个半圆：
+ *     左半（冬至→夏至，阳顺，天道左旋）：下卦卦主 震→离→兑→乾，
+ *           每组内上卦依次 坤→艮→坎→巽→震→离→兑→乾；
+ *     右半（夏至→冬至，阴逆，地道右旋）：下卦卦主 巽→坎→艮→坤，
+ *           每组内上卦依次 乾→兑→离→震→巽→坎→艮→坤。
+ *   圆周位次（pos 0 起，bearing 顺时针）：
+ *     pos 0  = 地雷复（正北，冬至一阳生）
+ *     pos 31 = 乾为天（正南）
+ *     pos 32 = 天风姤（正南，夏至一阴生）
+ *     pos 63 = 坤为地（正北）
+ *   故复≡冬至、姤≡夏至，二者正对；乾南坤北亦正对（各偏半格）。
+ *   左半 32 卦阳爻合计 112、阴爻 80，右半反之 —— 与经典圆图一致。
+ *
+ *   ⚠️ 圆图**不是**「相邻两卦变一爻」的次序（那是方图的性质）：
+ *     圆图 64 条相邻边中只有 34 条恰好变一爻。别用「每卦一变」去反推圆图。
+ *
+ *   出处：悟行阁《先天六十四卦方圆图解析》、易象乾坤《伏羲先天六十四卦圆图规律》。
  *
  * 【Unicode 卦符】
  *   U+4DC0..U+4DFF 按「文王卦序」排列（U+4DC0=䷀=乾=文王第1卦）。
@@ -101,26 +116,69 @@ export const WENWANG_GUA_BY_VALUE: readonly GuaMeta[] = [
   { value: 63, name: '乾', wenwangOrder: 1 }
 ]
 
-/** 6 位整体位反转：bit0↔bit5, bit1↔bit4, bit2↔bit3 */
-export function bitReverse6(n: number): number {
-  let out = 0
-  for (let i = 0; i < 6; i++) {
-    if (n & (1 << i)) out |= 1 << (5 - i)
-  }
-  return out
-}
+/**
+ * 圆图左半（冬至→夏至，阳顺）的内卦卦主
+ */
+const XIANTIAN_LEFT_INNER: readonly string[] = ['震', '离', '兑', '乾']
+
+/** 圆图左半的外卦次序 */
+const XIANTIAN_LEFT_OUTER: readonly string[] = ['坤', '艮', '坎', '巽', '震', '离', '兑', '乾']
+
+/** 圆图右半（夏至→冬至，阴逆）的内卦卦主 */
+const XIANTIAN_RIGHT_INNER: readonly string[] = ['巽', '坎', '艮', '坤']
+
+/** 圆图右半的外卦次序 */
+const XIANTIAN_RIGHT_OUTER: readonly string[] = ['乾', '兑', '离', '震', '巽', '坎', '艮', '坤']
+
+/** 「外卦|内卦」→ 六爻 value */
+const VALUE_BY_TRIGRAM: ReadonlyMap<string, number> = new Map(
+  WENWANG_GUA_BY_VALUE.map((m) => [`${getOuterGuaName(m.value)}|${getInnerGuaName(m.value)}`, m.value])
+)
 
 /**
- * 先天圆周位置（待复核）
+ * 伏羲六十四卦圆图的 64 卦次序（pos 0 起，bearing 顺时针）。
  *
- * ⚠ TODO 待核实：当前用 6 位整体位反转定圆周次序，
- *   结果为 坤(pos0) 与 乾(pos63) 相邻、坎(pos18) 与 离(pos45) 不对位，
- *   不符合伏羲圆图「四正卦居四正、每卦一变」的通行规制。
- *   需按权威圆图重新排布 pos，并以原盘古刻罗盘图逐格核对。
- *   （value 序本身已验证正确，见 scripts/verify-time.ts 第 12 组）
+ *   pos 0  = 地雷复（正北 · 冬至一阳生）
+ *   pos 31 = 乾为天（正南）
+ *   pos 32 = 天风姤（正南 · 夏至一阴生）
+ *   pos 63 = 坤为地（正北）
+ */
+export const XIANTIAN_CIRCLE_ORDER: readonly string[] = (() => {
+  const out: string[] = []
+  const push = (inner: string, outer: string) => {
+    const value = VALUE_BY_TRIGRAM.get(`${outer}|${inner}`)
+    if (value === undefined) {
+      throw new Error(`[gua] 圆图排布找不到「外${outer}内${inner}」对应的卦 —— 数据源不一致`)
+    }
+    out.push(WENWANG_GUA_BY_VALUE[value]!.name)
+  }
+  for (const inner of XIANTIAN_LEFT_INNER) for (const outer of XIANTIAN_LEFT_OUTER) push(inner, outer)
+  for (const inner of XIANTIAN_RIGHT_INNER) for (const outer of XIANTIAN_RIGHT_OUTER) push(inner, outer)
+  return out
+})()
+
+/** value → 圆周位次 */
+const XIANTIAN_POS_BY_VALUE: ReadonlyMap<number, number> = new Map(
+  XIANTIAN_CIRCLE_ORDER.map((name, pos) => {
+    const value = WENWANG_GUA_BY_VALUE.find((m) => m.name === name)!.value
+    return [value, pos] as const
+  })
+)
+
+/**
+ * 先天圆周位置（0-63）
+ *
+ * 由伏羲圆图的排布规则算出，不是位反转。
+ * ⚠️ 早前版本用 6 位整体位反转（bitReverse6）定次序，会把左右两个半圆对调，
+ *   导致「坤」与「乾」在圆周上相邻、「姤」紧贴「乾」——阴阳两极挤在一侧，
+ *   与圆图「复≡冬至、姤≡夏至，二者正对」的结构完全不符。
  */
 export function getXiantianPos(value: number): number {
-  return bitReverse6(value)
+  const pos = XIANTIAN_POS_BY_VALUE.get(value)
+  if (pos === undefined) {
+    throw new Error(`[gua] 未知卦 value=${value}`)
+  }
+  return pos
 }
 
 /** 六爻自下而上：true=阳爻，false=阴爻（下标0=初爻） */
