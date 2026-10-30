@@ -132,7 +132,7 @@ const viewport = useViewport()
 // 解构顶层 refs 给模板使用
 const { zoom, offsetX, offsetY, rotationDirection, rotationAngle } = viewport
 
-// Alt + 拖拽平移
+// 中键 / Alt + 拖拽平移
 const svgRef = ref<SVGSVGElement | null>(null)
 const { isDragging, isAltPressed } = useAltDragPan({ svgRef, viewport })
 

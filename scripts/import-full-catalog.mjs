@@ -211,9 +211,6 @@ function computeMansionRanges(data, coordMap) {
     }
   }
 
-  // 按距星 RA 排序,建区间
-  const sorted = MANSIONS_ORDER.filter(m => distStarRa[m] !== undefined)
-    .sort((a, b) => distStarRa[a] - distStarRa[b])
   // 取排序后的索引：实际上是按 RA 顺序重排后的 MANSIONS_ORDER
   const ranges = []
   for (let i = 0; i < MANSIONS_ORDER.length; i++) {
@@ -424,7 +421,6 @@ export interface ChineseAsterism {
     const cls = classified[i]
     const native = con.common_name?.native || cls.english || 'unknown'
     const english = con.common_name?.english || ''
-    const pronounce = con.common_name?.pronounce || ''
 
     // 变量名：用英文名转驼峰
     const varName = 'asterism_' + english.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
@@ -528,19 +524,6 @@ export interface ChineseAsterism {
   lines.push(`})()`)
 
   return lines.join('\n')
-}
-
-// 获取星名
-function getStarName(asterismEnglish, hip, data) {
-  // 先检查 common_names 区
-  if (data.common_names && data.common_names[`HIP ${hip}`]) {
-    const names = data.common_names[`HIP ${hip}`]
-    const cn = names.find(n => n.chinese)
-    if (cn && cn.chinese) return cn.chinese
-    if (names.length > 0 && names[0].english) return names[0].english
-  }
-  // 退回到 "asterism+编号"
-  return `${asterismEnglish}_HIP${hip}`
 }
 
 // ── 主流程 ──

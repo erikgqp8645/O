@@ -67,7 +67,8 @@ const onUserTimeChange = (v: Date) => {
 }
 
 // ─── 点击罗盘中心区（Sidebar / Handle 之外）自动收起 ───────────────
-const SIDEBAR_SELECTOR = '.sidebar, .handle'
+// .compass-list-btn 是右上角常驻的「← 罗盘一览」入口，属于导航控件，不应触发收起
+const SIDEBAR_SELECTOR = '.sidebar, .handle, .compass-list-btn'
 const onDocClick = (e: MouseEvent) => {
   if (!expanded.value) return
   const target = e.target as HTMLElement | null

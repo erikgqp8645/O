@@ -54,12 +54,23 @@ useViewportShortcuts({
       <SidebarButton size="xs" key-hint="7" @click="viewport.setZoom(1)">100%</SidebarButton>
       <SidebarButton size="xs" key-hint="8" @click="viewport.setZoom(1.25)">125%</SidebarButton>
       <SidebarButton size="xs" key-hint="9" @click="viewport.setZoom(1.5)">150%</SidebarButton>
+      <SidebarButton size="xs" @click="viewport.setZoom(2)">200%</SidebarButton>
+      <SidebarButton size="xs" @click="viewport.setZoom(3)">300%</SidebarButton>
+      <SidebarButton size="xs" @click="viewport.setZoom(5)">500%</SidebarButton>
+      <SidebarButton size="xs" @click="viewport.setZoom(8)">800%</SidebarButton>
     </div>
+
+    <p class="hint">滚轮缩放 · 双击放大 · 中键/Alt+拖拽平移</p>
 
     <div class="divider" />
 
-    <div class="numeric numeric--sm">
-      X: {{ viewport.offsetX.value }} &nbsp; Y: {{ viewport.offsetY.value }}
+    <div class="coord">
+      <span class="numeric numeric--sm">
+        X: {{ viewport.offsetX.value }} &nbsp; Y: {{ viewport.offsetY.value }}
+      </span>
+      <SidebarButton size="xs" key-hint="Del" title="Delete 键" @click="viewport.resetOffset()">
+        居中
+      </SidebarButton>
     </div>
 
     <div class="cross">
@@ -148,8 +159,23 @@ useViewportShortcuts({
 
 .presets {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2px;
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: #666;
+  letter-spacing: 0.02em;
+}
+
+.coord {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .divider {

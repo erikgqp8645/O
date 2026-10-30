@@ -4,7 +4,7 @@ import { shouldIgnoreShortcut } from './useTimeShortcuts'
 /**
  * 视口控制快捷键
  *   数字 0/5/6/7/8/9    缩放 100%/50%/75%/100%/125%/150%
- *   +/- / _/=          缩放增减
+ *   +/- / _/=          缩放增减（乘性 ×1.25，范围 5%~1000%）
  *   方向键              平移
  *   Delete / Backspace 平移重置
  *   C                  旋转方向切换

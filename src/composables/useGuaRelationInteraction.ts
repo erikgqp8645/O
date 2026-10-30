@@ -24,7 +24,7 @@ import {
   type GuaRelationEntry,
   type FocusRelationEntry,
 } from '@/utils/guaRelations'
-import { JING_FANG_64_GUA, JING_FANG_64_GUA_BY_VALUE, type ShiyingType } from '@/data/rings/jingFangEightPalaces'
+import { JING_FANG_64_GUA_BY_VALUE, type ShiyingType } from '@/data/rings/jingFangEightPalaces'
 
 // ─── 依赖注入 Key ───
 

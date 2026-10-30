@@ -571,7 +571,7 @@ const allPlanetsRing = computed(() =>
 - **状态解耦**：不再走 `v-model` 五联 —— View 只负责 `provideCompassContext({ time, viewport, onUserTimeChange })`
 - **View 专属工具位**：通过 `<Teleport to="#sidebar-view-tools">` 把 View 自己的控件塞进 Sidebar 的「视图选项」区块
 - **折叠形态**：展开态左侧 260px；折叠态整体 `translateX(-100%)`，屏幕左中悬浮一个 40×80 把手可再打开
-- **返回入口**：Sidebar 顶部统一提供「← 罗盘列表」链接，替代 9 个 View 各自复制的 `.back-link`
+- **返回入口**：两条通道互补 —— 侧栏顶部「← 首页」指向站点首页 `/`，另有独立于侧栏、左上角常驻的「← 罗盘一览」按钮（`/compass/`，挂在 CompassLayout）；全屏 layout 没有 VitePress 的 nav/logo，后者是唯一不依赖侧栏展开的返回通道。桌面端侧栏展开（占左侧 260px）时按钮自动右移到 274px 让位，移动端侧栏在底部，左上角恒空闲
 
 ### CompassSidebar 罗盘左侧嵌入式 Sidebar
 
@@ -580,7 +580,7 @@ const allPlanetsRing = computed(() =>
 结构：
 ```
 ┌─────────────────────┐
-│ SidebarHeader       │  ← 罗盘列表 · 罗盘名 · 折叠按钮
+│ SidebarHeader       │  ← 首页 · 罗盘名 · 折叠按钮
 ├─────────────────────┤
 │ 视图选项 [Teleport] │  ← 空则自动隐藏（CSS :has(:empty)）
 ├─────────────────────┤
@@ -595,6 +595,7 @@ const allPlanetsRing = computed(() =>
 |--------|------|
 | `SidebarHeader.vue` | 顶部品牌区：返回链接 + 当前罗盘中文名 + 折叠按钮 |
 | `SidebarToggleHandle.vue` | 折叠态的左中悬浮把手（`position: fixed; top: 50%`） |
+| `CompassListButton.vue` | 左上角常驻「← 罗盘一览」悬浮按钮（挂在 CompassLayout，不在 Sidebar 内） |
 | `SidebarSection.vue` | 通用可折叠 section 外壳（标题 + 内容 + ▸/▾ 指示） |
 | `SidebarButton.vue` | 侧栏按钮统一样式（取代旧 `ControlButton`） |
 | `TimePanel.vue` | 时间面板：三条时间线（公历/朝代/干支）+ 播放/步进/输入 |
@@ -753,24 +754,29 @@ useViewportShortcuts({
 })
 ```
 
-### useAltDragPan Alt + 拖拽平移 / 滚轮缩放
+### useAltDragPan 中键/Alt + 拖拽平移 / 滚轮缩放
 
 **位置**：`src/composables/useAltDragPan.ts`
 
-- **Alt + 鼠标左键拖拽** → 平移画布（更新 `offsetX` / `offsetY`）
-- **Alt + 滚轮** → 缩放（滚上放大，滚下缩小，`Ctrl` 无关，避免与浏览器缩放冲突）
+- **鼠标中键拖拽** → 平移画布（更新 `offsetX` / `offsetY`），CAD 通用习惯
+- **Alt + 鼠标左键拖拽** → 同样平移（没有中键的设备上的替代手势）
+- **滚轮** → 以光标位置为锚缩放（滚上放大，滚下缩小，无需按 Alt）
+- **双击** → 在光标处放大（< 150% 放到 250%，否则复位 100%）
 
 屏幕像素通过 SVG `preserveAspectRatio="xMidYMid meet"` 的短边比例换算为 viewBox 单位，与当前 zoom 独立。
+
+所有指针事件都挂在 SVG 的**父容器**上：SVG 内的 pointerdown 会冒泡到容器（原行为不变），
+盘面上方若有遮罩（如风水盘定位授权层）也能收到缩放 / 平移。
 
 ```typescript
 import { useAltDragPan } from '@/composables/useAltDragPan'
 
 const svgRef = ref<SVGSVGElement | null>(null)
 const viewport = useViewport()
-const { isDragging, isAltPressed } = useAltDragPan({ svgRef, viewport })
+const { isDragging, isAltPressed, isMiddlePanning } = useAltDragPan({ svgRef, viewport })
 ```
 
-`isAltPressed` 可用于切换 cursor 视觉反馈（`grab` / `grabbing`）。
+`isAltPressed` 可用于切换 cursor 视觉反馈（`grab` / `grabbing`）；`isDragging` 对两种平移手势都为真。
 
 ### useCompassContext 跨 Layout/View 状态桥
 

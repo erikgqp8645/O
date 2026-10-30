@@ -62,6 +62,7 @@ import FengShui24View from '@/views/FengShui24View.vue'
 import QiMenDunJiaView from '@/views/QiMenDunJiaView.vue'
 import HuangDiNeiJingView from '@/views/HuangDiNeiJingView.vue'
 import ConjunctionCyclesView from '@/views/ConjunctionCyclesView.vue'
+import YixiangLuopanView from '@/views/YixiangLuopanView.vue'
 
 // 卦关系盘圆心 + 文本环（RingStack 架构）
 import GuaRelationCenter from '@/components/centers/GuaRelationCenter.vue'
@@ -125,6 +126,7 @@ export default {
     app.component('QiMenDunJiaView', QiMenDunJiaView)
     app.component('HuangDiNeiJingView', HuangDiNeiJingView)
     app.component('ConjunctionCyclesView', ConjunctionCyclesView)
+    app.component('YixiangLuopanView', YixiangLuopanView)
     app.component('GuaRelationCenter', GuaRelationCenter)
     app.component('GuaRelationTextRing', GuaRelationTextRing)
   },

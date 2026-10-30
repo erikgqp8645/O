@@ -64,13 +64,24 @@ export interface UseViewportReturn {
   resetRotationAngle: () => void
 }
 
-const ZOOM_MIN = 0.1
-const ZOOM_MAX = 3
-const ZOOM_STEP = 0.1
+/**
+ * 缩放范围与步进
+ *
+ *   · 0.05 ~ 10（5% ~ 1000%）：上限由 300% 放开到 1000%，
+ *     才能把六十四卦环的卦名、爻画、二十四山这类细节放到看得清的大小
+ *   · 乘性步进 ×1.25：100% → 1000% 只需按 11 次，
+ *     线性 0.1 步进要按 90 次
+ *
+ * 这两个常量被 useAltDragPan（滚轮缩放）复用，改一处即可两处同步。
+ */
+export const ZOOM_MIN = 0.05
+export const ZOOM_MAX = 10
+const ZOOM_FACTOR = 1.25
 const OFFSET_STEP = 50
 const ROTATE_STEP = 90
 
-const clampZoom = (z: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z))
+const clampZoom = (z: number) =>
+  Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(Number(z).toFixed(4))))
 
 export function useViewport(initial: ViewportInitial = {}): UseViewportReturn {
   const zoom = ref<number>(initial.zoom ?? 1)
@@ -83,8 +94,8 @@ export function useViewport(initial: ViewportInitial = {}): UseViewportReturn {
   const updateZoom = (z: number) => {
     zoom.value = clampZoom(z)
   }
-  const zoomIn = () => updateZoom(zoom.value + ZOOM_STEP)
-  const zoomOut = () => updateZoom(zoom.value - ZOOM_STEP)
+  const zoomIn = () => updateZoom(zoom.value * ZOOM_FACTOR)
+  const zoomOut = () => updateZoom(zoom.value / ZOOM_FACTOR)
   const resetZoom = () => updateZoom(1)
   const setZoom = (z: number) => updateZoom(z)
 

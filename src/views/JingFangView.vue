@@ -56,7 +56,7 @@ const viewport = useViewport()
 // 解构出 refs 给模板使用：Vue 3 只对 setup 顶层变量自动解包，viewport.zoom 需要 .value
 const { zoom, offsetX, offsetY, rotationDirection, rotationAngle } = viewport
 
-// Alt + 拖拽平移
+// 中键 / Alt + 拖拽平移
 const svgRef = ref<SVGSVGElement | null>(null)
 const { isDragging, isAltPressed } = useAltDragPan({ svgRef, viewport })
 
