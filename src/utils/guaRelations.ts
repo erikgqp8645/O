@@ -167,7 +167,8 @@ export function computeDuigua(value: number): number {
 }
 
 /** 综卦：上下颠倒（6 位 bit 反转）
- *  复用 sixtyFourGua.ts 的 bitReverse6，与先天圆图位置计算相同算法 */
+ *  ⚠️ 这是**爻位颠倒**的运算，与先天圆图的圆周位次无关：
+ *     圆图位次由伏羲排布规则算出（见 guaUtils.getXiantianPos），不是位反转。 */
 export function computeZonggua(value: number): number {
   return bitReverse6(value)
 }

@@ -26,7 +26,7 @@ export const compasses: CompassMeta[] = [
   {
     id: 'sixty-four-gua',
     name: '先天六十四卦盘',
-    description: '伏羲／邵雍先天圆图，六十四卦按二进制位反转排列，乾南坤北、两仪对称，展示卦符、卦名与六爻爻象',
+    description: '伏羲／邵雍先天圆图，六十四卦按伏羲圆图排布规则成圆（复≡冬至、姤≡夏至正对），乾居正上、坤居正下、两仪各占半圆，展示卦符、卦名与六爻爻象',
     category: '易学'
   },
   {

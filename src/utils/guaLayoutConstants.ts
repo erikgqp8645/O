@@ -13,8 +13,13 @@
  * ═══════════════════════════════════════════════════════════════
  */
 
-import { bitReverse6 } from '@/utils/guaUtils'
-import { GUA_STEP, WENWANG_GUA_BY_VALUE, ZAGUAZHUAN_POS_BY_VALUE } from '@/data/sixtyFourGua'
+import { getXiantianPos } from '@/utils/guaUtils'
+import {
+  GUA_STEP,
+  WENWANG_GUA_BY_VALUE,
+  ZAGUAZHUAN_POS_BY_VALUE,
+  getXiantianCenterAngle
+} from '@/data/sixtyFourGua'
 import { JING_FANG_64_GUA_BY_VALUE, JING_FANG_EIGHT_PALACE_STEP } from '@/data/rings/jingFangEightPalaces'
 
 // ─── 排序布局类型 ───
@@ -23,7 +28,7 @@ import { JING_FANG_64_GUA_BY_VALUE, JING_FANG_EIGHT_PALACE_STEP } from '@/data/r
  * 卦象排列方式
  *
  *   jingfang    — 京房八宫序（汉·京房《京氏易传》）：八宫成扇区
- *   xiantian    — 先天圆图（宋·邵雍《皇极经世·观物外篇》，本自伏羲）：位反转序
+ *   xiantian    — 先天圆图（宋·邵雍《皇极经世·观物外篇》，本自伏羲）：伏羲排布规则序
  *   binary      — 自然二进制序：value 0→63 顶乾底坤逆时针
  *   wenwang     — 文王卦序（通行本《周易·序卦传》）：乾坤屯蒙需讼师比…
  *   zaguazhuan  — 杂卦传序（《周易·杂卦传》）：乾坤比师临观屯蒙…
@@ -55,7 +60,7 @@ function posToAngle(pos: number, startDegree: number): number {
  *
  * 各布局的 pos → angle 映射约定：
  *   - jingfang：宫位重排 (乾坎艮震坤离兑巽)，每宫 8 卦占 45°
- *   - xiantian：乾顶坤底、两仪对径 (阳仪右半、阴仪左半)
+ *   - xiantian：乾居正上、坤居正下、两仪对径 (阳仪复…乾居左半、阴仪姤…坤居右半)
  *   - binary：value 直接映射为 pos，坤顶乾底
  *   - wenwang：wenwangOrder-1 映射为 pos，乾坤起、既未济终
  *   - zaguazhuan：《杂卦传》文本次序
@@ -76,11 +81,9 @@ export function getGuaAngle(value: number, layout: GuaLayout, startDegree: numbe
       return (270 + order * JING_FANG_EIGHT_PALACE_STEP + startDegree) % 360
     }
     case 'xiantian': {
-      const pos = bitReverse6(value)
-      const angle = pos >= 32
-        ? 270 + (63 - pos) * GUA_STEP
-        : 270 - (32 - pos) * GUA_STEP
-      return (angle + startDegree) % 360
+      // 伏羲圆图排布规则序（复≡冬至、姤≡夏至正对），与先天六十四卦盘同一套角度
+      const pos = getXiantianPos(value)
+      return (getXiantianCenterAngle(pos) + startDegree) % 360
     }
     case 'binary':
       return posToAngle(value, startDegree)

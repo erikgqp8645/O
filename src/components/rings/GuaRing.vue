@@ -136,12 +136,12 @@ const lineBandOuter = computed(() => resolvedInnerRadius.value + band.value * 0.
 /** 文字旋转：顶部指向圆心（统一走 geometry） */
 const textRotationOf = (midAngle: number) => radialTextRotation(midAngle, props.rotationDirection)
 
-/** 阴阳两仪背景扇形：阳仪 pos>=32，阴仪 pos<32 */
+/** 阴阳两仪背景扇形：阳仪＝复…乾（pos<=31，冬至→夏至，阳气渐长），阴仪＝姤…坤（pos>=32，夏至→冬至） */
 const yinYangSectors = computed(() => {
   if (!props.showYinYang) return []
   return XIANTIAN_64_GUA.map(g => ({
     key: g.value,
-    fill: g.pos >= 32 ? props.yangTint : props.yinTint,
+    fill: g.pos <= 31 ? props.yangTint : props.yinTint,
     path: arcPath(props.radius, resolvedInnerRadius.value, g.startAngle, g.endAngle)
   }))
 })
