@@ -59,6 +59,21 @@
 - **VitePress ↔ `src/` 融合**：`@` alias 指向 `src/`，通过 `docs/.vitepress/config.ts` 的 `vite.resolve.alias` 暴露；新增 View 后必须同步在 `docs/compass/<id>.md` 注册（`layout: compass` + 顶层 View 标签），并在 `src/compasses/index.ts` 登记元数据
 - **新增罗盘五步走**：① `src/views/XxxView.vue` ② `src/compasses/index.ts` 注册 ③ `docs/compass/<id>.md`（layout: compass）④ `src/components/rings/<id>/` 放专用环（共享环放 `rings/` 根）⑤ 复杂计算下沉到 `src/utils/`
 
+## 罗盘总览汇总页（2026-10-31 新增）
+
+`/O/compass/overview` —— 把站内 13 个罗盘并排陈列在一页，每枚一枚**实况缩略盘**，点击进入对应全屏罗盘。入口在罗盘一览页（`src/views/HomeView.vue`）页尾。
+
+- **不是罗盘，故不入 `compasses[]`**：注册表驱动首页卡片与 `useCompassMeta` 匹配，把汇总页注册进去会自我包含。汇总页走 `layout: page`（默认主题，可滚动），不是全屏盘用的 `layout: compass`（`position: fixed`、不可滚动）。
+- **不复用各罗盘的 View**：13 个 View 各自绑定全屏专属副作用（`Teleport to="#sidebar-view-tools"` 抢挂载点、独立 `useLiveClock` 秒级定时器、`useAltDragPan` 滚轮 `preventDefault` 劫持页面滚动、`useGeolocation` 弹定位授权、`usePhoneOrientation` 传感器遮罩、`provideCompassContext` 模块级单例），并排挂载必然互相打架。
+  缩略盘改用**底层环组件**另建一套小尺寸盘面：同样的 `RingStack` + 同样的环组件 + 同样的坐标系，只把 `viewBox` 缩小 —— 环层比例与锚点方位与全屏盘严格一致。
+- **落点**：`src/components/overview/`（`CompassThumb` / `YixiangThumb` / `LazyThumb` / `XiantianSquareThumb` + `thumbSpecs.ts` 规格表）、`src/utils/overview/thumbGeometry.ts`（纯函数）、`src/views/CompassOverviewView.vue`、`docs/compass/overview.md`。
+- **⚠️ 规格表是各全屏盘环配置的镜像**：改了某个全屏盘的环配置，`thumbSpecs.ts` 要同步改一次，否则缩略图与全屏盘对不上。`thumbSpecs.spec.ts` 有「每个罗盘都必须有缩略规格 + 环数」的一致性断言兜底。
+- **⚠️ 时间分桶**：全页共用一个 1Hz 时钟，但 13 枚盘若都按秒重算，苏州星图 / 会合连线会被放大 13 倍。按「盘面实际变化粒度」分桶：六十甲子六环按**秒**（唯一按秒变化的盘），其余 12 枚按**分**。
+  🔑 分桶必须**先取数字 key 再还原 Date**（`timeBucketKey` / `timeFromBucketKey`）——直接 `computed(() => new Date(...))` 每秒都返回新对象，下游 computed 会被逐秒唤醒，分桶白做。
+- **⚠️ 汇总页刻意不用 `useUrlTime`**：`useUrlTime` 会把时刻写回 URL `?t=`，下次加载据此冻结时钟（其余罗盘页靠侧栏「回到实时」解开，本仓目前并无该按钮）。汇总页是实况陈列面且**没有侧栏**，冻结即死盘 —— 故自带实时时钟、不绑 URL。
+- **懒渲染**：`LazyThumb` 用 `IntersectionObserver`，重计算的盘（苏州石刻图 / 会合周期 / 七曜入宿）滚到视口附近才挂载，挂载后不再卸载。
+- **圆心按需取舍**：缩略尺寸下文字信息卡不可读，故奇门 / 五运六气 / 回归年的文字圆心略去；方图、箭头、北斗、星图、会合连线等图形圆心保留。易象罗盘的宣纸配色变量只挂 `.thumb-frame--yixiang`（**不写 `:root`**）。
+
 ## 易象罗盘 · 方位锚定口径（改盘面前先读）
 
 **易象罗盘的唯一来源就是本仓库**（2026-10-30 决策）。独立仓 `C:\Users\hxst01\Documents\aicoding\yixiang-luopan` 曾是同一套逻辑的另一份拷贝，现已**冻结留档、不再同步、不再维护**——改易象罗盘只改本仓，**不要**把改动同步回独立仓。本仓相关落点：`src/data/yixiang/`（纯数据）、`src/utils/yixiang/`（口径与几何）、`src/components/yixiang/`（盘面）、`src/views/YixiangLuopanView.vue`（View）、`src/utils/yixiang/__tests__/`（自检）。

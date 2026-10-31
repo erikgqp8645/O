@@ -31,6 +31,20 @@ import logoUrl from '@/assets/andaoai-logo-dark.svg'
         <p class="card-desc">{{ c.description }}</p>
       </a>
     </div>
+
+    <!-- ═══ 罗盘总览入口 ═══
+         汇总页不是罗盘本身，因此不注册进 compasses[]（否则会自我包含），
+         只在页尾以独立入口的形式给出。 -->
+    <a class="overview-entry" :href="withBase('/compass/overview')">
+      <span class="overview-entry-badge">总览</span>
+      <span class="overview-entry-body">
+        <span class="overview-entry-title">罗盘总览</span>
+        <span class="overview-entry-desc">
+          十三个罗盘同页实况缩略，一眼纵览全站盘面，点击任一枚进入全屏盘
+        </span>
+      </span>
+      <span class="overview-entry-arrow" aria-hidden="true">→</span>
+    </a>
   </div>
 </template>
 
@@ -116,5 +130,68 @@ import logoUrl from '@/assets/andaoai-logo-dark.svg'
   color: var(--vp-c-text-2);
   line-height: 1.6;
   margin: 0;
+}
+
+/* ═══ 罗盘总览入口 ═══ */
+.overview-entry {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 20px 24px;
+  background-color: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    background-color 0.2s;
+}
+
+.overview-entry:hover {
+  border-color: var(--ysg-gold-600, #c8a2e8);
+  background-color: var(--vp-c-bg-elv);
+  transform: translateY(-2px);
+}
+
+.overview-entry-badge {
+  flex-shrink: 0;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--ysg-gold-600, #c8a2e8);
+  border: 1px solid var(--ysg-gold-600, #c8a2e8);
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+.overview-entry-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-entry-title {
+  font-size: 17px;
+  color: var(--vp-c-text-1);
+}
+
+.overview-entry-desc {
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+}
+
+.overview-entry-arrow {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--ysg-gold-600, #c8a2e8);
+  transition: transform 0.2s;
+}
+
+.overview-entry:hover .overview-entry-arrow {
+  transform: translateX(4px);
 }
 </style>
